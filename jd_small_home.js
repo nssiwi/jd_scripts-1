@@ -2,7 +2,7 @@
  * @Author: lxk0301 https://github.com/lxk0301
  * @Date: 2020-11-12 11:42:12
  * @Last Modified by: lxk0301
- * @Last Modified time: 2020-12-23 14:27:20
+ * @Last Modified time: 2021-1-4 14:27:20
  */
 /*
 东东小窝 https://raw.githubusercontent.com/lxk0301/jd_scripts/master/jd_small_home.js
@@ -59,6 +59,7 @@ if ($.isNode()) {
   cookiesArr.reverse();
   cookiesArr.push(...[$.getdata('CookieJD2'), $.getdata('CookieJD')]);
   cookiesArr.reverse();
+  cookiesArr = cookiesArr.filter(item => item !== "" && item !== null && item !== undefined);
 }
 $.newShareCodes = [];
 const JD_API_HOST = 'https://lkyl.dianpusoft.cn/api';
@@ -83,8 +84,6 @@ const JD_API_HOST = 'https://lkyl.dianpusoft.cn/api';
 
         if ($.isNode()) {
           await notify.sendNotify(`${$.name}cookie已失效 - ${$.UserName}`, `京东账号${$.index} ${$.UserName}\n请重新登录获取cookie`);
-        } else {
-          $.setdata('', `CookieJD${i ? i + 1 : ""}`);//cookie失效，故清空cookie。$.setdata('', `CookieJD${i ? i + 1 : "" }`);//cookie失效，故清空cookie。
         }
         continue
       }
@@ -280,25 +279,27 @@ function queryFurnituresCenterList() {
           if (safeGet(data)) {
             data = JSON.parse(data);
             if (data.head.code === 200) {
-              let {buy, list} = data.body;
-              $.canBuyList = [];
-              list.map((item, index) => {
-                if (buy.some((buyItem) => buyItem === item.id)) return
-                $.canBuyList.push(item);
-              })
-              $.canBuyList.sort(sortByjdBeanNum);
-              if ($.canBuyList[0].needWoB <= $.woB) {
-                await furnituresCenterPurchase($.canBuyList[0].id, $.canBuyList[0].jdBeanNum);
-              } else {
-                console.log(`\n兑换${$.canBuyList[0].jdBeanNum}京豆失败:当前wo币${$.woB}不够兑换所需的${$.canBuyList[0].needWoB}WO币`)
-                message += `【装饰领京豆】兑换${$.canBuyList[0].jdBeanNum}京豆失败,原因:WO币不够\n`;
+              if (data.body) {
+                let {buy, list} = data.body;
+                $.canBuyList = [];
+                list.map((item, index) => {
+                  if (buy.some((buyItem) => buyItem === item.id)) return
+                  $.canBuyList.push(item);
+                })
+                $.canBuyList.sort(sortByjdBeanNum);
+                if ($.canBuyList[0].needWoB <= $.woB) {
+                  await furnituresCenterPurchase($.canBuyList[0].id, $.canBuyList[0].jdBeanNum);
+                } else {
+                  console.log(`\n兑换${$.canBuyList[0].jdBeanNum}京豆失败:当前wo币${$.woB}不够兑换所需的${$.canBuyList[0].needWoB}WO币`)
+                  message += `【装饰领京豆】兑换${$.canBuyList[0].jdBeanNum}京豆失败,原因:WO币不够\n`;
+                }
+                // for (let canBuyItem of $.canBuyList) {
+                //   if (canBuyItem.needWoB <= $.woB) {
+                //     await furnituresCenterPurchase(canBuyItem.id, canBuyItem.jdBeanNum);
+                //     break
+                //   }
+                // }
               }
-              // for (let canBuyItem of $.canBuyList) {
-              //   if (canBuyItem.needWoB <= $.woB) {
-              //     await furnituresCenterPurchase(canBuyItem.id, canBuyItem.jdBeanNum);
-              //     break
-              //   }
-              // }
             }
           }
         }
